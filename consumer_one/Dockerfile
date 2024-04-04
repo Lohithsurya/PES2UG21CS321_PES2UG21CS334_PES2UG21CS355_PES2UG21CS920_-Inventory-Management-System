@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install -r requirements.txt
 
 # Command to run the consumer script
-CMD ["python", "healthcheck.py"]
+CMD ["python", "consumer_one.py"]
