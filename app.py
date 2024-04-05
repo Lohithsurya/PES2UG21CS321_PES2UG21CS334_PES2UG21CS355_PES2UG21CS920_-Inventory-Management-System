@@ -122,7 +122,7 @@ def create_item():
     return render_template('index.html', inventory=inventory)
 
 # Route for updating an existing item by ID
-@app.route('/inventory/<int:item_id>', methods=['POST'])
+@app.route('/inventory/<int:item_id>', methods=['UPDATE'])
 def update_item(item_id):
     item = find_item_by_id(item_id)
     if not item:
@@ -137,7 +137,7 @@ def update_item(item_id):
     return render_template('index.html', inventory=inventory)
 
 # Route for deleting an item by ID
-@app.route('/inventory/<int:item_id>', methods=['POST'])
+@app.route('/inventory', methods=['DELETE'])
 def delete_item(item_id):
     item = find_item_by_id(item_id)
     if not item:

@@ -21,7 +21,35 @@ services:
       - rabbitmq
     network_mode: "host"  # Run in host network mode
 
-  # Add other services similarly
+  consumer_two:
+    build: ./consumer_two
+    image: inventory-management-system-consumer-two:latest
+    volumes:
+      - ./consumer_two:/app
+    depends_on:
+      - database
+      - rabbitmq
+    network_mode: "host"  # Run in host network mode
+
+  consumer_three:
+    build: ./consumer_three
+    image: inventory-management-system-consumer-three:latest
+    volumes:
+      - ./consumer_three:/app
+    depends_on:
+      - database
+      - rabbitmq
+    network_mode: "host"  # Run in host network mode
+
+  consumer_four:
+    build: ./consumer_four
+    image: inventory-management-system-consumer-four:latest
+    volumes:
+      - ./consumer_four:/app
+    depends_on:
+      - database
+      - rabbitmq
+    network_mode: "host"  # Run in host network mode
 
   rabbitmq:
     image: rabbitmq:latest
