@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+</head>
+<body>
+    <div>
+    <h1>Inventory Management</h1>
+    </div>
+    <div>
+        <button onclick="window.location.href='/additem'">Add Item</button>
+        <button onclick="window.location.href='/updateitem'">Update Item</button>
+        <button onclick="window.location.href='/deleteitem/{{item_id}}'">Delete Item</button>
+    </div>
+    <div>
+    <h2>View Inventory</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>
