@@ -1,142 +1,246 @@
 from flask import Flask, jsonify, request, render_template
+import mysql.connector
 import pika
 import json
 
 app = Flask(__name__)
 
-# RabbitMQ connection parameters
 RABBITMQ_HOST = 'localhost'
 RABBITMQ_PORT = 5672
 RABBITMQ_USER = 'guest'
 RABBITMQ_PASS = 'guest'
 
-# Establish connection to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT,
-                                                               credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)))
-channel = connection.channel()
+def send_message(queue_name, message):
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT, credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)))
+    channel = connection.channel()
+    channel.queue_declare(queue=queue_name)
+    channel.basic_publish(exchange='', routing_key=queue_name, body=json.dumps(message))
+    connection.close()
 
-# Declare queues
-channel.queue_declare(queue='health_check_queue')
-channel.queue_declare(queue='item_creation_queue')
-channel.queue_declare(queue='stock_management_queue')
-channel.queue_declare(queue='order_processing_queue')
+def fetch_inventory_data():
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Virgo_129",
+        database="inventory_management"
+    )
+    cursor = db.cursor(dictionary=True)
+    sql = "SELECT * FROM inventory"
+    cursor.execute(sql)
+    inventory = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return inventory
 
-# Sample data for inventory (initially empty)
-inventory = []
+def fetch_order_data():
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Virgo_129",
+        database="inventory_management"
+    )
+    cursor = db.cursor(dictionary=True)
+    sql = "SELECT * from orders"
+    cursor.execute(sql)
+    orders = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return orders
 
-# Helper function to find an item by ID
-def find_item_by_id(item_id):
-    for item in inventory:
-        if item['id'] == item_id:
-            return item
-    return None
-
-# Define a route for the root URL
-@app.route('/')
-def index():
-    return render_template('index.html', inventory=inventory)
-
-# Health check endpoint
 @app.route('/health')
 def health_check():
-    # Send health check message to RabbitMQ
-    channel.basic_publish(exchange='', routing_key='health_check_queue', body=json.dumps({'message': 'Health Check'}))
+    send_message('health_check_queue', {'message': 'Health Check'})
     return jsonify({'status': 'ok'})
 
-# Route for creating a new item
-@app.route('/inventory', methods=['POST'])
-def create_item():
+@app.route('/')
+def index():
+    inventory = fetch_inventory_data()
+    return render_template('index.html', inventory=inventory)
+
+@app.route('/add-item')
+def add_item():
+    return render_template('additem.html')
+
+@app.route('/delete-item')
+def delete_item():
+    return render_template('delete.html')
+
+@app.route('/update-item')
+def update_item():
+    return render_template('updateitem.html')
+
+@app.route('/orderitem')
+def order_item():
+    orders = fetch_order_data()
+    return render_template('orderitem.html', orders=orders)
+
+@app.route('/additem', methods=['POST'])
+def create_inventory_item():
     data = request.form
     if 'name' not in data or 'quantity' not in data:
-        return jsonify({'error': 'Missing name or quantity'}), 400
+        return jsonify({'error': 'Missing name, quantity'}), 400
     
-    item = {
-        'id': len(inventory) + 1,
-        'name': data['name'],
-        'quantity': int(data['quantity'])  # Ensure quantity is converted to integer
-    }
-    inventory.append(item)
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Virgo_129",
+        database="inventory_management"
+    )
+    cursor = db.cursor(dictionary=True)
+    
+    sql = "INSERT INTO inventory (name, quantity) VALUES (%s, %s)"
+    values = (data['name'], data['quantity'])
+    cursor.execute(sql, values)
+    db.commit()
+    
+    cursor.close()
+    db.close()
+    
+    # Define the content of the message to be published to RabbitMQ
+    item = {'action': 'create', 'name': data['name'], 'quantity': data['quantity']}
+    
+    # Publish the message to RabbitMQ
+    send_message('item_creation_queue', item)
+    
+    # Reload inventory data
+    inventory = fetch_inventory_data()
+    
+    return render_template('additem.html', inventory=inventory, message='Inventory item created successfully')
 
-    # Send item creation message to RabbitMQ
-    channel.basic_publish(exchange='', routing_key='item_creation_queue', body=json.dumps(item))
-
-    return render_template('index.html', inventory=inventory)
-
-# Route for updating an existing item by ID
-@app.route('/inventory/<int:item_id>', methods=['UPDATE'])
-def update_item(item_id):
-    item = find_item_by_id(item_id)
-    if not item:
-        return jsonify({'error': 'Item not found'}), 404
-
+# Route for updating an existing inventory item by ID
+@app.route('/updateitem', methods=['POST'])
+def update_inventory_item():
     data = request.form
-    if 'name' in data:
-        item['name'] = data['name']
-    if 'quantity' in data:
-        item['quantity'] = int(data['quantity'])  # Ensure quantity is converted to integer
+    name = data['name']
+    item_id = data['item_id']
+    quantity = data['quantity']
+    if not name or not item_id or not quantity:
+        return jsonify({'error': 'Missing name, quantity, or item ID'}), 400
     
-    return render_template('index.html', inventory=inventory)
-
-# Route for deleting an item by ID
-@app.route('/inventory', methods=['DELETE'])
-def delete_item(item_id):
-    item = find_item_by_id(item_id)
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Virgo_129",
+        database="inventory_management"
+    )
+    cursor = db.cursor(dictionary=True)
+    
+    sql = "SELECT * FROM inventory WHERE id = %s"
+    cursor.execute(sql, (item_id,))
+    item = cursor.fetchone()
     if not item:
-        return jsonify({'error': 'Item not found'}), 404
+        cursor.close()
+        db.close()
+        return jsonify({'error': 'Inventory item not found'}), 404
+
+    update_values = []
+    if 'name' in data:
+        update_values.append(f"name = '{data['name']}'")
+    if 'quantity' in data:
+        update_values.append(f"quantity = {data['quantity']}")
     
-    inventory.remove(item)
+    if update_values:
+        sql = f"UPDATE inventory SET {', '.join(update_values)} WHERE id = {item_id}"
+        cursor.execute(sql)
+        db.commit()
+    
+    cursor.close()
+    db.close()
+    
+    # Reload inventory data
+    inventory = fetch_inventory_data()
+    
+    # Define the content of the message to be published to RabbitMQ
+    item = {'action': 'update', 'id': item_id, 'name': name, 'quantity': quantity}
+    
+    # Publish the message to RabbitMQ
+    send_message('item_management_queue', item)
+    
+    # Render success message template
+    return render_template('updateitem.html', inventory=inventory, message='Inventory item updated successfully')
 
-    # Send item deletion message to RabbitMQ
-    channel.basic_publish(exchange='', routing_key='item_deletion_queue', body=json.dumps({'item_id': item_id}))
+# Route for deleting an inventory item by ID
+@app.route('/deleteitem', methods=["GET"])
+def delete_inventory_item():
+    item_id = request.args.get("item_id")
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Virgo_129",
+        database="inventory_management"
+    )
+    cursor = db.cursor(dictionary=True)
+    
+    sql = "DELETE FROM inventory WHERE id = %s"
+    cursor.execute(sql, (item_id,))
+    db.commit()
+    
+    cursor.close()
+    db.close()
+    
+    # Reload inventory data
+    inventory = fetch_inventory_data()
 
-    return render_template('index.html', inventory=inventory)
+    # Define the content of the message to be published to RabbitMQ
+    item = {'action': 'delete', 'id': item_id}
+    
+    # Publish the message to RabbitMQ
+    send_message('item_management_queue', item)
+    
+    return render_template('delete.html', inventory=inventory, message='Inventory item deleted successfully')
 
-# Consumer for health checks
-def health_check_consumer():
-    def callback(ch, method, properties, body):
-        print("Received health check message:", json.loads(body))
-        # Implement health check functionality
 
-    channel.basic_consume(queue='health_check_queue', on_message_callback=callback, auto_ack=True)
-    print("Consumer for health checks waiting for messages. To exit press CTRL+C")
-    channel.start_consuming()
+    
+# Route for processing an order
+@app.route('/orderitem', methods=['POST'])
+def order_inventory_item():
+    try:
+        data = request.form
+        name = data.get('customer_name')
+        item_id = data.get('item_id')
+        quantity = data.get('quantity')
 
-# Consumer for item creation
-def item_creation_consumer():
-    def callback(ch, method, properties, body):
-        print("Received item creation message:", json.loads(body))
-        # Implement item creation functionality
+        if not name or not item_id or not quantity:
+            return jsonify({'error': 'Incorrect name, quantity, or item ID'}), 400
+        
+        db = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="Virgo_129",
+            database="inventory_management"
+        )
 
-    channel.basic_consume(queue='item_creation_queue', on_message_callback=callback, auto_ack=True)
-    print("Consumer for item creation waiting for messages. To exit press CTRL+C")
-    channel.start_consuming()
+        cursor = db.cursor(dictionary=True)
+        
+        sql1 = "SELECT * FROM inventory WHERE id = %s"
+        cursor.execute(sql1, (item_id,))
+        item = cursor.fetchone()
+        if not item:
+            return jsonify({'error': 'Inventory item not found'}), 404
+        
+        sql = "INSERT INTO orders (item_id, customer_name, order_quantity) VALUES (%s, %s, %s)"
+        
+        values = (item_id, name, quantity)
+        cursor.execute(sql, values)
+        db.commit()
+        
+        # Define the content of the message to be published to RabbitMQ
+        order = {'action': 'create', 'item_id': item_id, 'customer_name': name, 'order_quantity': quantity}
+        
+        # Publish the message to RabbitMQ
+        send_message('order_management_queue', order)
+        
+        orders = fetch_inventory_data()
+        
+        return render_template('orderitem.html', orders=orders,  message='Inventory item ordered successfully')
 
-# Consumer for stock management
-def stock_management_consumer():
-    def callback(ch, method, properties, body):
-        print("Received stock management message:", json.loads(body))
-        # Implement stock management functionality
+    except mysql.connector.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    
+    finally:
+        cursor.close()
+        db.close()
 
-    channel.basic_consume(queue='stock_management_queue', on_message_callback=callback, auto_ack=True)
-    print("Consumer for stock management waiting for messages. To exit press CTRL+C")
-    channel.start_consuming()
-
-# Consumer for order processing
-def order_processing_consumer():
-    def callback(ch, method, properties, body):
-        print("Received order processing message:", json.loads(body))
-        # Implement order processing functionality
-
-    channel.basic_consume(queue='order_processing_queue', on_message_callback=callback, auto_ack=True)
-    print("Consumer for order processing waiting for messages. To exit press CTRL+C")
-    channel.start_consuming()
-
+    
 if __name__ == '__main__':
-    # Run the Flask application
     app.run(debug=True, host='0.0.0.0')
-
-    # Start consumers
-    health_check_consumer()
-    item_creation_consumer()
-    stock_management_consumer()
-    order_processing_consumer()

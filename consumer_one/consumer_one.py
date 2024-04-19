@@ -1,31 +1,30 @@
 import pika
 import json
-import psutil
+
+RABBITMQ_HOST = 'rabbitmq'
+RABBITMQ_PORT = 5672
+RABBITMQ_USER = 'guest'
+RABBITMQ_PASS = 'guest'
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue='inventory_queue')
-
     def callback(ch, method, properties, body):
-        print("Consumer One received health check message:", body.decode())
-        # Implement health check functionality here
-        # For example, perform system health checks and log the results
-        cpu_usage = psutil.cpu_percent(interval=1)
-        memory_usage = psutil.virtual_memory().percent
-        disk_usage = psutil.disk_usage('/').percent
+        # Decode the message from bytes to string
+        message = json.loads(body.decode())
+        # Print the received message
+        print("Received message from producer.py:", message)
 
-        health_data = {
-            "cpu_usage": cpu_usage,
-            "memory_usage": memory_usage,
-            "disk_usage": disk_usage
-        }
+    # Establish a connection to RabbitMQ
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672, credentials=pika.PlainCredentials('guest', 'guest')))
+    channel = connection.channel()
 
-        print("Health check results:", health_data)
+    # Declare the queue to consume messages from
+    channel.queue_declare(queue='health_check_queue')
 
-    channel.basic_consume(queue='inventory_queue', on_message_callback=callback, auto_ack=True)
+    # Set up a consumer to receive messages
+    channel.basic_consume(queue='health_check_queue', on_message_callback=callback, auto_ack=True)
 
     print("Consumer One waiting for health check messages. To exit press CTRL+C")
+    # Start consuming messages
     channel.start_consuming()
 
 if __name__ == '__main__':

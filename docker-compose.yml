@@ -61,14 +61,15 @@ services:
     network_mode: "host"  # Run in host network mode
 
   database:
-    image: postgres:latest
+    image: mysql:latest  
     environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: inventory_database
+      MYSQL_ROOT_PASSWORD: rootpassword  
+      MYSQL_DATABASE: inventory_management  
+      MYSQL_USER: user  
+      MYSQL_PASSWORD: Virgo_129  
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    network_mode: "host"  # Run in host network mode
+      - mysql_data:/var/lib/mysql  
+    network_mode: "host"  
 
 volumes:
-  postgres_data:
+  mysql_data:

@@ -10,5 +10,7 @@ COPY . /app
 # Install dependencies
 RUN pip install -r requirements.txt
 
+EXPOSE 5000
+
 # Command to run the consumer script
 CMD ["python", "consumer_one.py"]
