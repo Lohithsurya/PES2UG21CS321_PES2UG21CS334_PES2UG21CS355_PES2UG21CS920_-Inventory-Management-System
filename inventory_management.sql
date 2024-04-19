@@ -13,13 +13,14 @@ CREATE TABLE inventory (
 );
 
 -- Create table for orders
-/*CREATE TABLE orders (
+CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
+    item_id INTEGER REFERENCES inventory(id),
     customer_name VARCHAR(255) NOT NULL,
-    total_amount NUMERIC(10, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL,
+    order_quantity NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);*/
+);
 
 -- Create table for order items
 /*CREATE TABLE order_items (

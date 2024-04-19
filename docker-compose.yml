@@ -9,7 +9,8 @@ services:
     depends_on:
       - database
       - rabbitmq
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   consumer_one:
     build: ./consumer_one
@@ -19,7 +20,8 @@ services:
     depends_on:
       - database
       - rabbitmq
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   consumer_two:
     build: ./consumer_two
@@ -29,7 +31,8 @@ services:
     depends_on:
       - database
       - rabbitmq
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   consumer_three:
     build: ./consumer_three
@@ -39,7 +42,8 @@ services:
     depends_on:
       - database
       - rabbitmq
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   consumer_four:
     build: ./consumer_four
@@ -49,7 +53,8 @@ services:
     depends_on:
       - database
       - rabbitmq
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   rabbitmq:
     image: rabbitmq:latest
@@ -58,7 +63,8 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork
 
   database:
     image: postgres:latest
@@ -68,7 +74,12 @@ services:
       POSTGRES_DB: inventory_database
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    network_mode: "host"  # Run in host network mode
+    networks:
+      - mynetwork 
+
+networks:
+  mynetwork:
+    driver: bridge
 
 volumes:
   postgres_data:

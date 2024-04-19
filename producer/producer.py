@@ -1,7 +1,7 @@
 # import pika
 
 # # Establish connection to RabbitMQ server
-# connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+# connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq', 5672))
 # channel = connection.channel()
 
 # # Declare a queue
@@ -9,19 +9,19 @@
 
 # # Publish a message to the queue
 # channel.basic_publish(exchange='', routing_key='inventory_queue', body='Message from producer')
-# print(" [x] Sent 'Hello World!'")
+
 # # Close connection
 # connection.close()
 
 import pika
 
 class ProducerService:
-    def __init__(self, host='localhost', port=5672):
+    def __init__(self, host='rabbitmq', port=5672):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, port=port))
         self.channel = self.connection.channel()
 
-    def create_queue(self, queue_name):
-        self.channel.queue_declare(queue=queue_name)
+    def create_queue(self, ):
+        self.channel.queue_declare(queue='inventory_queue')
 
     def create_exchange(self, exchange_name, exchange_type='direct'):
         self.channel.exchange_declare(exchange=exchange_name, exchange_type=exchange_type)
@@ -36,11 +36,11 @@ class ProducerService:
 # Example usage
 if __name__ == "__main__":
     producer = ProducerService()
-    producer.create_exchange('my_exchange', 'direct')
-    producer.create_queue('my_queue')
-    producer.channel.queue_bind(exchange='my_exchange', queue='my_queue', routing_key='my_routing_key')
+    producer.create_exchange('inventory_exchange', 'direct')
+    producer.create_queue('inventory_queue')
+    producer.channel.queue_bind(exchange='', queue='inventory_queue', routing_key='inventory_queue')
 
     # Publish message to the exchange
-    producer.publish_message('my_exchange', 'my_routing_key', 'Hello, World!')
+    producer.publish_message('', 'inventory_queue', 'Message from producer')
 
     producer.close_connection()
