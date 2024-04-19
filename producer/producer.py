@@ -1,27 +1,8 @@
-<<<<<<< HEAD
+import pika, json
 from flask import Flask, jsonify, request, render_template
 import mysql.connector
-=======
-# import pika
 
-# # Establish connection to RabbitMQ server
-# connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq', 5672))
-# channel = connection.channel()
 
-# # Declare a queue
-# channel.queue_declare(queue='inventory_queue')
-
-# # Publish a message to the queue
-# channel.basic_publish(exchange='', routing_key='inventory_queue', body='Message from producer')
-
-# # Close connection
-# connection.close()
-
->>>>>>> 4e1c931086771419fea6341f07ef7b792a45991c
-import pika
-import json
-
-<<<<<<< HEAD
 producer = Flask(__name__)
 
 RABBITMQ_HOST = 'rabbitmq'
@@ -264,7 +245,8 @@ def order_inventory_item():
 if __name__ == '__main__':
     producer.run(debug=True, host='0.0.0.0')
     print("Producer running on port 5000")
-=======
+
+
 class ProducerService:
     def __init__(self, host='rabbitmq', port=5672):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, port=port))
@@ -294,4 +276,4 @@ if __name__ == "__main__":
     producer.publish_message('', 'inventory_queue', 'Message from producer')
 
     producer.close_connection()
->>>>>>> 4e1c931086771419fea6341f07ef7b792a45991c
+
