@@ -10,6 +10,7 @@ COPY . /app
 # Install any needed dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
+EXPOSE 5002
 # Run the consumer_four service
 CMD ["python", "consumer_two.py"]
+

@@ -1,75 +1,76 @@
-version: '3'
+version: "3.8"
+
+networks:
+  prodcon_network:
+    driver: bridge
 
 services:
-  producer:
-    build: ./producer
-    image: inventory-management-system-producer:latest
-    volumes:
-      - ./producer:/app
-    depends_on:
-      - database
-      - rabbitmq
-    network_mode: "host"  # Run in host network mode
-
-  consumer_one:
-    build: ./consumer_one
-    image: inventory-management-system-consumer-one:latest
-    volumes:
-      - ./consumer_one:/app
-    depends_on:
-      - database
-      - rabbitmq
-    network_mode: "host"  # Run in host network mode
-
-  consumer_two:
-    build: ./consumer_two
-    image: inventory-management-system-consumer-two:latest
-    volumes:
-      - ./consumer_two:/app
-    depends_on:
-      - database
-      - rabbitmq
-    network_mode: "host"  # Run in host network mode
-
-  consumer_three:
-    build: ./consumer_three
-    image: inventory-management-system-consumer-three:latest
-    volumes:
-      - ./consumer_three:/app
-    depends_on:
-      - database
-      - rabbitmq
-    network_mode: "host"  # Run in host network mode
-
-  consumer_four:
-    build: ./consumer_four
-    image: inventory-management-system-consumer-four:latest
-    volumes:
-      - ./consumer_four:/app
-    depends_on:
-      - database
-      - rabbitmq
-    network_mode: "host"  # Run in host network mode
-
   rabbitmq:
-    image: rabbitmq:latest
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+    image: rabbitmq:3-management
+    hostname: rabbitmq
     ports:
-      - "5672:5672"
-    network_mode: "host"  # Run in host network mode
+      - "15672:15672" # For RabbitMQ management interface
+      - "5672:5672" # For RabbitMQ message broker
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      retries: 3
+    networks:
+      - prodcon_network
 
-  database:
-    image: mysql:latest  
+  producer:
+    build: producer/
+    ports:
+      - "5000:5000" # For Flask server
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword  
-      MYSQL_DATABASE: inventory_management  
-      MYSQL_USER: user  
-      MYSQL_PASSWORD: Virgo_129  
-    volumes:
-      - mysql_data:/var/lib/mysql  
-    network_mode: "host"  
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    networks:
+      - prodcon_network
 
-volumes:
-  mysql_data:
+  consumer_health_check:
+    build: consumer_one/
+    depends_on:
+      producer:
+        condition: service_started
+    networks:
+      - prodcon_network
+
+  consumer_insert_record:
+    build: consumer_two/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - prodcon_network
+
+  consumer_delete_record:
+    build: consumer_three/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - prodcon_network
+
+  consumer_read_database:
+    build: consumer_four/
+    command: python3 read_database.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - prodcon_network
+
+  consumer_order:
+    build: consumer_five/
+    command: python3 order.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - prodcon_network
