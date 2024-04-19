@@ -13,5 +13,9 @@ RUN pip install -r requirements.txt
 EXPOSE 5001
 
 # Command to run the consumer script
+<<<<<<< HEAD
 CMD ["python", "consumer_one.py"]
 
+=======
+CMD ["python", "healthcheck.py"]
+>>>>>>> 4e1c931086771419fea6341f07ef7b792a45991c
