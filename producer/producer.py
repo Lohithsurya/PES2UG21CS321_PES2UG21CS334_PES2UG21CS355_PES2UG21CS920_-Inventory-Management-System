@@ -21,7 +21,7 @@ def fetch_inventory_data():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Virgo_129",
+        password="rhtx@sql",
         database="inventory_management"
     )
     cursor = db.cursor(dictionary=True)
@@ -36,7 +36,7 @@ def fetch_order_data():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Virgo_129",
+        password="rhtx@sql",
         database="inventory_management"
     )
     cursor = db.cursor(dictionary=True)
@@ -83,7 +83,7 @@ def create_inventory_item():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Virgo_129",
+        password="rhtx@sql",
         database="inventory_management"
     )
     cursor = db.cursor(dictionary=True)
@@ -120,7 +120,7 @@ def update_inventory_item():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Virgo_129",
+        password="rhtx@sql",
         database="inventory_management"
     )
     cursor = db.cursor(dictionary=True)
@@ -166,7 +166,7 @@ def delete_inventory_item():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Virgo_129",
+        password="rhtx@sql",
         database="inventory_management"
     )
     cursor = db.cursor(dictionary=True)
@@ -206,7 +206,7 @@ def order_inventory_item():
         db = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Virgo_129",
+            password="rhtx@sql",
             database="inventory_management"
         )
 
@@ -244,3 +244,4 @@ def order_inventory_item():
     
 if __name__ == '__main__':
     producer.run(debug=True, host='0.0.0.0')
+    print("Producer running on port 5000")

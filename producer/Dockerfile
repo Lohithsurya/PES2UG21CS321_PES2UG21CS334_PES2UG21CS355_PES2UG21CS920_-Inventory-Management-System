@@ -15,3 +15,5 @@ EXPOSE 5000
 # Command to run the producer script
 CMD ["python", "producer.py"]
 
+
+
