@@ -1,3 +1,88 @@
+# version: '3'
+
+# services:
+#   producer:
+#     build: ./producer
+#     image: inventory-management-system-producer:latest
+#     volumes:
+#       - ./producer:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - localhost
+
+#   consumer_one:
+#     build: ./consumer_one
+#     image: inventory-management-system-consumer-one:latest
+#     volumes:
+#       - ./consumer_one:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - mynetwork
+
+#   consumer_two:
+#     build: ./consumer_two
+#     image: inventory-management-system-consumer-two:latest
+#     volumes:
+#       - ./consumer_two:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - mynetwork
+
+#   consumer_three:
+#     build: ./consumer_three
+#     image: inventory-management-system-consumer-three:latest
+#     volumes:
+#       - ./consumer_three:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - mynetwork
+
+#   consumer_four:
+#     build: ./consumer_four
+#     image: inventory-management-system-consumer-four:latest
+#     volumes:
+#       - ./consumer_four:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - mynetwork
+
+#   rabbitmq:
+#     image: rabbitmq:latest
+#     environment:
+#       RABBITMQ_DEFAULT_USER: guest
+#       RABBITMQ_DEFAULT_PASS: guest
+#     ports:
+#       - "5672:5672"
+#     networks:
+#       - mynetwork
+
+#   database:
+#     image: mysql:latest  
+#     environment:
+#       MYSQL_ROOT_PASSWORD: rootpassword  
+#       MYSQL_DATABASE: inventory_management  
+#       MYSQL_USER: user  
+#       MYSQL_PASSWORD: Virgo_129  
+#     volumes:
+#       - mysql_data:/var/lib/mysql  
+#     network_mode: "host"  
+
+# volumes:
+#   mysql_data:
+
+
+
+
 version: '3'
 
 services:
@@ -9,8 +94,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   consumer_one:
     build: ./consumer_one
@@ -20,8 +104,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   consumer_two:
     build: ./consumer_two
@@ -31,8 +114,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   consumer_three:
     build: ./consumer_three
@@ -42,8 +124,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   consumer_four:
     build: ./consumer_four
@@ -53,8 +134,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   rabbitmq:
     image: rabbitmq:latest
@@ -63,23 +143,18 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"
-    networks:
-      - mynetwork
+    network_mode: "host"  # Run in host network mode
 
   database:
-    image: postgres:latest
+    image: mysql:latest  
     environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: inventory_database
+      MYSQL_ROOT_PASSWORD: rootpassword  
+      MYSQL_DATABASE: inventory_management  
+      MYSQL_USER: user  
+      MYSQL_PASSWORD: rhtx@sql 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - mynetwork 
-
-networks:
-  mynetwork:
-    driver: bridge
+      - mysql_data:/var/lib/mysql  
+    network_mode: "host"  
 
 volumes:
-  postgres_data:
+  mysql_data:
