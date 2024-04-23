@@ -22,11 +22,3 @@ CREATE TABLE orders (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create table for order items
-/*CREATE TABLE order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-    inventory_id INTEGER REFERENCES inventory(id) ON DELETE CASCADE,
-    quantity INTEGER NOT NULL,
-    price NUMERIC(10, 2) NOT NULL
-);*/

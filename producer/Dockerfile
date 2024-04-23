@@ -10,6 +10,8 @@ COPY . /app
 # Install dependencies
 RUN pip install -r requirements.txt
 
+EXPOSE 5000
+
 # Command to run the producer script
 CMD ["python", "producer.py"]
 
